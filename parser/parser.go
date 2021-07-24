@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/fikriauliya/yamlexplorer/entity"
 	"gopkg.in/yaml.v2"
 )
 
-type table struct {
-	headers []string
-	values  []([]string)
-}
-
-func ParseYAML(path string) (*table, error) {
+func ParseYAML(path string) (*entity.Table, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read the file: %s", err)
@@ -47,7 +43,7 @@ func ParseYAML(path string) (*table, error) {
 		}
 		break
 	}
-	return &table{
-		headers: headers,
-		values:  values}, nil
+	return &entity.Table{
+		Headers: headers,
+		Values:  values}, nil
 }
