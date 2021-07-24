@@ -8,7 +8,31 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ParseYAML(path string) (*entity.Table, error) {
+func extractHeader(rows []interface{}) []string {
+	var headers []string
+	for _, row := range rows {
+		row := row.(map[interface{}]interface{})
+		headers = make([]string, len(row))
+		for header := range row {
+			headers = append(headers, header.(string))
+		}
+	}
+	return headers
+}
+
+func extractBody(rows []interface{}) []([]string) {
+	body := make([]([]string), len(rows))
+	for i, row := range rows {
+		row := row.(map[interface{}]interface{})
+		body[i] = make([]string, len(row))
+		for _, value := range row {
+			body[i] = append(body[i], value.(string))
+		}
+	}
+	return body
+}
+
+func readAndUnmarshallYAML(path string) (*map[interface{}]interface{}, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read the file: %s", err)
@@ -18,32 +42,24 @@ func ParseYAML(path string) (*entity.Table, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshall YAML: %s", err)
 	}
+	return &m, err
+}
 
-	var headers []string
-	var values []([]string)
-
-	for _, v := range m {
-		rows := v.([]interface{})
-		values = make([]([]string), len(rows))
-
-		firstRow := true
-		for i, row := range rows {
-			row := row.(map[interface{}]interface{})
-			if firstRow {
-				headers = make([]string, len(row))
-				for header := range row {
-					headers = append(headers, header.(string))
-				}
-				firstRow = false
-			}
-			values[i] = make([]string, len(headers))
-			for _, value := range row {
-				values[i] = append(values[i], value.(string))
-			}
-		}
-		break
+func ParseYAML(path string) (*entity.Table, error) {
+	m, err := readAndUnmarshallYAML(path)
+	if err != nil {
+		return nil, err
 	}
-	return &entity.Table{
-		Headers: headers,
-		Values:  values}, nil
+
+	for _, v := range *m {
+		rows := v.([]interface{})
+
+		header := extractHeader(rows)
+		body := extractBody(rows)
+		return &entity.Table{
+			Header: header,
+			Body:   body}, nil
+
+	}
+	return nil, fmt.Errorf("invalid YAML")
 }
