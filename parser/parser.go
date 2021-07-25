@@ -73,7 +73,11 @@ func ParseYAML(path string) (*entity.Table, error) {
 		meta := meta.(map[interface{}]interface{})
 		o, ok := meta[interface{}("order")]
 		if ok {
-			order = o.([]string)
+			o := o.([]interface{})
+			order = make([]string, len(o))
+			for i, item := range o {
+				order[i] = item.(string)
+			}
 		}
 	}
 
