@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fikriauliya/yamlexplorer/parser"
+	"github.com/fikriauliya/yamlexplorer/renderer"
 )
 
 func main() {
@@ -13,5 +14,7 @@ func main() {
 		fmt.Printf("Error parsing file: %s: %s\n", path, err)
 		return
 	}
-	fmt.Println(table)
+	fmt.Printf("%+v", table)
+	r := renderer.NewRenderer()
+	r.Render(table)
 }
