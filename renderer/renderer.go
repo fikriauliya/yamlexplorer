@@ -40,6 +40,10 @@ func (r *renderer) Render(table *entity.Table) error {
 	return nil
 }
 
+func leftAlign(s string, width int) string {
+	return fmt.Sprintf("%-*s", width, s)
+}
+
 func trim(s string, max int) string {
 	return s[:max]
 }
@@ -54,19 +58,25 @@ func (r *renderer) Layout(g *gocui.Gui) error {
 		return err
 	}
 
+	y := 0
 	for i, header := range r.data.Header {
-		v.SetWritePos(i*columnSize, 0)
-		v.WriteString(fmt.Sprintf("%-*s|", columnSize-1, header))
+		v.SetWritePos(i*columnSize, y)
+		v.WriteString(trim(leftAlign(header, columnSize-1), columnSize-1))
+		v.WriteString("|")
 	}
+
+	y = 1
 	for i := range r.data.Header {
-		v.SetWritePos(i*columnSize, 1)
+		v.SetWritePos(i*columnSize, y)
 		v.WriteString(strings.Repeat("-", columnSize-1))
 		v.WriteString("|")
 	}
+
+	y = 2
 	for i, row := range r.data.Body {
 		for j, cell := range row {
-			v.SetWritePos(j*columnSize, 2+i)
-			v.WriteString(trim(fmt.Sprintf("%-*s", columnSize-1, cell), columnSize-1))
+			v.SetWritePos(j*columnSize, y+i)
+			v.WriteString(trim(leftAlign(cell, columnSize-1), columnSize-1))
 			v.WriteString("|")
 		}
 	}
