@@ -3,6 +3,7 @@ package renderer
 import (
 	"fmt"
 
+	"github.com/fikriauliya/yamlexplorer/entity"
 	"github.com/montanaflynn/stats"
 )
 
@@ -46,23 +47,53 @@ func medianVector(a [][]float64) (*[]float64, error) {
 	return &res, nil
 }
 
-func Resize(body [][]string, maxWidth int) (*[][]string, error) {
-	columns := lenMatrix(transpose(body))
-	medianLengths, err := medianVector(columns)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([][]string, len(body))
-	for i, row := range body {
-		res[i] = make([]string, len(row))
-		for j := range row {
-			minLen := int((*medianLengths)[j])
-			if minLen > len(body[i][j]) {
-				minLen = len(body[i][j])
-			}
-			res[i][j] = body[i][j][:minLen]
+func max(v []float64) float64 {
+	max := v[0]
+	for _, item := range v {
+		if item > max {
+			max = item
 		}
 	}
-	return &res, nil
+	return max
+}
+
+func calculateWidths(m [][]string, maxWidth int) ([]int, error) {
+	columns := lenMatrix(transpose(m))
+	medianLengths, err := medianVector(columns)
+	if err != nil {
+		return []int{}, err
+	}
+
+	widths := make([]int, len(columns))
+	usedWidth := 0
+	for i := range columns {
+		remWidth := maxWidth - usedWidth
+		width := 0
+		if i == len(columns)-1 {
+			width = remWidth
+		} else {
+			medianLen := int((*medianLengths)[i])
+			maxLen := int(max(columns[i]))
+
+			width = medianLen
+			if maxLen-width <= 2 {
+				width = maxLen
+			}
+
+			if remWidth < width {
+				width = remWidth
+			}
+			usedWidth += width
+		}
+		widths[i] = width
+	}
+	return widths, nil
+}
+
+func Resize(t *entity.Table, maxWidth int) ([]int, error) {
+	widths, err := calculateWidths(t.Body, maxWidth)
+	if err != nil {
+		return []int{}, err
+	}
+	return widths, nil
 }

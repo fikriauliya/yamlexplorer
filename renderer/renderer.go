@@ -3,6 +3,8 @@ package renderer
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/awesome-gocui/gocui"
@@ -18,6 +20,8 @@ type renderer struct {
 }
 
 func NewRenderer() Renderer {
+	file, _ := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	log.SetOutput(file)
 	return &renderer{}
 }
 
@@ -44,14 +48,14 @@ func leftAlign(s string, width int) string {
 	return fmt.Sprintf("%-*s", width, s)
 }
 
-func trim(s string, max int) string {
-	return s[:max]
-}
-
 func (r *renderer) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	viewName := "table"
-	columnSize := 50
+
+	widths, err := Resize(r.data, maxX-(len(r.data.Header)*2)-1) // space for <space>|
+	if err != nil {
+		return err
+	}
 
 	v, err := g.SetView(viewName, 0, 0, maxX, maxY, 0)
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
@@ -59,25 +63,28 @@ func (r *renderer) Layout(g *gocui.Gui) error {
 	}
 
 	y := 0
+	v.SetWritePos(0, y)
+
 	for i, header := range r.data.Header {
-		v.SetWritePos(i*columnSize, y)
-		v.WriteString(trim(leftAlign(header, columnSize-1), columnSize-1))
-		v.WriteString("|")
+		v.WriteString(trim(leftAlign(header, widths[i]), widths[i]))
+		v.WriteString(" |")
 	}
 
 	y = 1
+	v.SetWritePos(0, y)
 	for i := range r.data.Header {
-		v.SetWritePos(i*columnSize, y)
-		v.WriteString(strings.Repeat("-", columnSize-1))
-		v.WriteString("|")
+		if widths[i] > 0 {
+			v.WriteString(strings.Repeat("-", widths[i]))
+		}
+		v.WriteString(" |")
 	}
 
 	y = 2
 	for i, row := range r.data.Body {
+		v.SetWritePos(0, y+i)
 		for j, cell := range row {
-			v.SetWritePos(j*columnSize, y+i)
-			v.WriteString(trim(leftAlign(cell, columnSize-1), columnSize-1))
-			v.WriteString("|")
+			v.WriteString(trim(leftAlign(cell, widths[j]), widths[j]))
+			v.WriteString(" |")
 		}
 	}
 
