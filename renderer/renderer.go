@@ -52,7 +52,7 @@ func (r *renderer) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	viewName := "table"
 
-	widths, err := Resize(r.data, maxX-(len(r.data.Header)*2)-1) // space for <space>|
+	widths, err := Resize(r.data, maxX-(len(r.data.Header)*3)-1) // space for <space>|
 	if err != nil {
 		return err
 	}
@@ -66,6 +66,7 @@ func (r *renderer) Layout(g *gocui.Gui) error {
 	v.SetWritePos(0, y)
 
 	for i, header := range r.data.Header {
+		v.WriteString(" ")
 		v.WriteString(trim(leftAlign(header, widths[i]), widths[i]))
 		v.WriteString(" |")
 	}
@@ -73,6 +74,7 @@ func (r *renderer) Layout(g *gocui.Gui) error {
 	y = 1
 	v.SetWritePos(0, y)
 	for i := range r.data.Header {
+		v.WriteString(" ")
 		if widths[i] > 0 {
 			v.WriteString(strings.Repeat("-", widths[i]))
 		}
@@ -83,6 +85,7 @@ func (r *renderer) Layout(g *gocui.Gui) error {
 	for i, row := range r.data.Body {
 		v.SetWritePos(0, y+i)
 		for j, cell := range row {
+			v.WriteString(" ")
 			v.WriteString(trim(leftAlign(cell, widths[j]), widths[j]))
 			v.WriteString(" |")
 		}
