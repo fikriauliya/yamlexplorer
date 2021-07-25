@@ -8,25 +8,41 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func extractHeader(rows []interface{}) []string {
-	var headers []string
-	for _, row := range rows {
-		row := row.(map[interface{}]interface{})
-		headers = make([]string, len(row))
-		for header := range row {
-			headers = append(headers, header.(string))
+func extractHeader(rows []interface{}, order []string) []string {
+	headers := make(map[string]bool)
+	headerRow := rows[0].(map[interface{}]interface{})
+
+	for header := range headerRow {
+		headers[header.(string)] = true
+	}
+	result := make([]string, 0)
+	if order != nil {
+		for _, o := range order {
+			if _, ok := headers[o]; ok {
+				result = append(result, o)
+			}
+		}
+	} else {
+		for k := range headers {
+			result = append(result, k)
 		}
 	}
-	return headers
+	return result
 }
 
-func extractBody(rows []interface{}) []([]string) {
+func extractBody(header []string, rows []interface{}) []([]string) {
 	body := make([]([]string), len(rows))
+	headerOrder := make(map[string]int)
+	for i, h := range header {
+		headerOrder[h] = i
+	}
 	for i, row := range rows {
 		row := row.(map[interface{}]interface{})
 		body[i] = make([]string, len(row))
-		for _, value := range row {
-			body[i] = append(body[i], value.(string))
+		for k, value := range row {
+			value := value.(string)
+			j := headerOrder[k.(string)]
+			body[i][j] = value
 		}
 	}
 	return body
@@ -51,15 +67,26 @@ func ParseYAML(path string) (*entity.Table, error) {
 		return nil, err
 	}
 
-	for _, v := range *m {
-		rows := v.([]interface{})
+	var order []string
+	meta, ok := (*m)[interface{}("_meta")]
+	if ok {
+		meta := meta.(map[interface{}]interface{})
+		o, ok := meta[interface{}("order")]
+		if ok {
+			order = o.([]string)
+		}
+	}
 
-		header := extractHeader(rows)
-		body := extractBody(rows)
-		return &entity.Table{
-			Header: header,
-			Body:   body}, nil
+	for k, v := range *m {
+		if k != "_meta" {
+			rows := v.([]interface{})
 
+			header := extractHeader(rows, order)
+			body := extractBody(header, rows)
+			return &entity.Table{
+				Header: header,
+				Body:   body}, nil
+		}
 	}
 	return nil, fmt.Errorf("invalid YAML")
 }
