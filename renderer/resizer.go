@@ -91,7 +91,10 @@ func calculateWidths(m [][]string, maxWidth int) ([]int, error) {
 }
 
 func Resize(t *entity.Table, maxWidth int) ([]int, error) {
-	widths, err := calculateWidths(t.Body, maxWidth)
+	headerAndBody := make([][]string, 0)
+	headerAndBody = append(headerAndBody, t.Header)
+	headerAndBody = append(headerAndBody, t.Body...)
+	widths, err := calculateWidths(headerAndBody, maxWidth)
 	if err != nil {
 		return []int{}, err
 	}
