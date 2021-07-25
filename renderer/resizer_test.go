@@ -66,9 +66,8 @@ var _ = Describe("Resizer", func() {
 		Context("total width is smaller than total columns' width", func() {
 			It("the width equals to the median length of the column", func() {
 				sut := entity.Table{
-					Header: []string{"", ""},
+					Header: []string{"Helloo", "Hi"},
 					Body: [][]string{
-						{"Helloo", "Hi"},
 						{"1", "The"},
 					}}
 
@@ -80,9 +79,8 @@ var _ = Describe("Resizer", func() {
 			Context("the max length is only 2 larger than the median", func() {
 				It("the width equals to the max length of the column", func() {
 					sut := entity.Table{
-						Header: []string{"", ""},
+						Header: []string{"Hello", "Hi"},
 						Body: [][]string{
-							{"Hello", "Hi"},
 							{"12", "The"},
 						}}
 
