@@ -40,9 +40,15 @@ func extractBody(header []string, rows []interface{}) []([]string) {
 		row := row.(map[interface{}]interface{})
 		body[i] = make([]string, len(row))
 		for k, value := range row {
-			value := value.(string)
+			var newValue string
+			switch value.(type) {
+			case string:
+				newValue = value.(string)
+			case int:
+				newValue = fmt.Sprint(value.(int))
+			}
 			j := headerOrder[k.(string)]
-			body[i][j] = value
+			body[i][j] = newValue
 		}
 	}
 	return body
